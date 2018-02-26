@@ -1,1 +1,1 @@
-# aws_-fundamentals_training
+# aws_fundamentals_training
