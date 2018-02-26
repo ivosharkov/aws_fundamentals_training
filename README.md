@@ -1,8 +1,8 @@
-# aws_fundamentals_training
+# AWS Fundamentials Training
 
-# Presentation - [link](https://docs.google.com/presentation/d/1LFcGFRunab_0UKTUX6_0WxXR2kR6yyt38DQCP8c3Ydw/edit?usp=sharing)
+## Presentation - [link](https://docs.google.com/presentation/d/1LFcGFRunab_0UKTUX6_0WxXR2kR6yyt38DQCP8c3Ydw/edit?usp=sharing)
 
-# Cloud formation usage examples:
+## Cloud formation usage examples:
 
 aws cloudformation package --template-file training-ec2.yml --output-template-file training-output.yml --s3-bucket training 
 
