@@ -24,3 +24,6 @@ chmod +x /usr/local/bin/docker-compose
 ##configure index.html
 public_ip=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
 sed -i "s/SPRING_IO/$public_ip/g" index.html
+
+##run docker-compose
+docker-compose up -d
