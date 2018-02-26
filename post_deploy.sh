@@ -10,7 +10,7 @@ add-apt-repository    "deb [arch=amd64] https://download.docker.com/linux/ubuntu
    $(lsb_release -cs) \
    stable"
 apt-get update
-apt-get install docker-ce -i
+apt-get install docker-ce -y
 
 groupadd docker
 usermod -aG docker ubuntu
@@ -21,7 +21,7 @@ chmod +x /usr/local/bin/docker-compose
 
 
 ##configure index.html
-public_ip=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
+export public_ip=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
 sed -i "s/SPRING_IO/$public_ip/g" index.html
 
 ##run docker-compose
