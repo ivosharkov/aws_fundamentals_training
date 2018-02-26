@@ -1,0 +1,152 @@
+# Usage examples:
+# aws cloudformation package --template-file training-ec2.yml --output-template-file training-output.yml --s3-bucket training
+# aws cloudformation deploy --template-file training-output.yml --capabilities CAPABILITY_IAM --stack-name training-sit --parameter-overrides Env=sit
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation Template: Create Training cloudformation stack'
+Parameters:
+  Cloud:
+    Type: String
+    Default: AIM
+  InstanceType:
+    Description: Training EC2 instance type
+    Type: String
+    Default: m4.large
+    AllowedValues:
+    - m4.large
+    - m4.xlarge
+  KeyPairName:
+    Type: String
+    Default: AIM
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: training.scalefocus
+  HostedZoneName:
+    Type: String
+    Description: Name of hosted zone
+    Default: "trainingscalefocus.com."
+  HostName:
+    Type: String
+    Default: training1
+    Description: Training Base Name
+  Env:
+    Type: String
+    Description: Environment (dev,sit,etc)
+  SecureDevGroupName:
+    Type: String
+    Default: sg-9b0977e7
+    Description: AIM_SecureDev SG ID required for access from AIM SecureDev
+
+    
+
+Mappings:
+  ImageMap:
+    us-east-1:
+      ami: ami-c58c1dd3
+    us-west-2:
+      ami: ami-9a2dc9e2
+  HostedZoneIdMap:
+    trainingscalefocus.com.:
+      public: Z5UBD797A3MK2
+      private: Z2JJ0QMTROK6WH
+
+Resources:
+  #Route53 entries
+  TrainingDNSPublic:
+      Type: AWS::Route53::RecordSetGroup
+      Properties:
+        HostedZoneId:
+          Fn::FindInMap:
+          - HostedZoneIdMap
+          - Ref: HostedZoneName
+          - private
+        Comment: Training private DNS entry.
+        RecordSets:
+        - Name: !Join [".",[ !Ref HostName, !Ref Env, !Ref HostedZoneName ]]
+          Type: A
+          ResourceRecords:
+          - !GetAtt TrainingEc2Instance.PublicIp
+          TTL: '900'
+
+  # Security group
+  TrainingSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Join ['-',["training", !Ref Env, "sg"]] 
+      GroupDescription: "Security Group for Training"
+      Tags:
+        - Key: Name
+          Value: !Join ['-',["training", !Ref Env, "sg"]]
+      VpcId:
+        Fn::ImportValue: !Join [-, [!Ref Cloud, VPC]]
+
+  TrainingIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: TrainingSecurityGroup
+      IpProtocol: tcp
+      FromPort: '80'
+      ToPort: '80'
+      CidrIp: '*'
+
+  #EC2 Instance
+  TrainingEc2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Join ["-", [!Ref Cloud, !Ref Env, !Ref HostName]]
+      InstanceType: !Ref InstanceType
+      NetworkInterfaces:
+        - DeviceIndex: "0"
+          GroupSet:
+            - !Ref TrainingSecurityGroup
+            - Fn::ImportValue: !Join ["-", [!Ref Cloud, InternalSSHAccessSecurityGroup]]
+            - !Ref SecureDevGroupName
+          SubnetId: subnet-fbb1b59d
+      KeyName:
+        Ref: KeyPairName
+      ImageId:
+        Fn::FindInMap:
+        - ImageMap
+        - Ref: AWS::Region
+        - ami
+      InstanceType:
+        Ref: InstanceType
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            VolumeSize: "50"
+            VolumeType: "gp2"
+      UserData:
+        "Fn::Base64":
+          !Sub |
+            #!/bin/bash -xe
+           
+            env=${Env}
+            hostname=${HostName}
+
+            echo "Set FQDN"
+            sudo echo $hostname > /etc/hostname
+            sudo ansible localhost -m hostname -a "name=$hostname"
+            sudo sed -i 's/127.0.1.1.*/127.0.1.1\t'"$hostname"'/g' /etc/hosts
+            sudo sysctl kernel.hostname=$hostname.$env.trainingscalefocus.com
+            
+            echo "deploy and configure the erlang service"
+            sudo ansible-playbook -i /dev/null $ansible_playbook -e "training_env=$env" -vv
+            cd ../../
+            rm -rf temp 
+
+
+Outputs:
+  TrainingSecurityGroupId:
+    Description: Output Training Security Group ID
+    Value: !GetAtt TrainingSecurityGroup.GroupId
+    Export:
+      Name: !Join ['-', [TrainingSecurityGroupId, !Ref Env]]
+
+  TrainingPublicIp:
+    Description: Output Training Public IP
+    Value: !GetAtt TrainingEc2Instance.PublicIp
+    Export:
+      Name: !Join ['-', [TrainingEC2PublicIP, !Ref Env]]
