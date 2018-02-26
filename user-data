@@ -1,0 +1,4 @@
+#!/bin/sh
+git clone https://github.com/ivosharkov/aws_fundamentals_training
+cd aws_fundamentals_training
+sudo sh post-deploy.sh
