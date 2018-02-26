@@ -1,7 +1,6 @@
 #!/bin/sh
 
-#post deployment configuration
-sudo su
+#post deployment configuration:
 
 ## add docker ce
 apt-get install   apt-transport-https     ca-certificates     curl     software-properties-common
