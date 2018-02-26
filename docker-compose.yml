@@ -1,0 +1,15 @@
+version: '2'
+services:
+  web:
+    image: nginx
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html
+    ports:
+      - "80:80"
+    depends_on: 
+      - springio
+
+  springio:
+    image: springio/gs-spring-boot-docker
+    ports:
+      - "8080:8080"
