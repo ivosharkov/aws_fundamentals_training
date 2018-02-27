@@ -6,7 +6,7 @@ Description: 'AWS CloudFormation Template: Create Training cloudformation stack'
 Parameters:
   Cloud:
     Type: String
-    Default: AIM
+    Default: Training
   InstanceType:
     Description: Training EC2 instance type
     Type: String
@@ -134,7 +134,7 @@ Resources:
             
             git clone https://github.com/ivosharkov/aws_fundamentals_training
             cd aws_fundamentals_training
-            sudo sh post-deploy.sh
+            sh post-deploy.sh
 
 
 Outputs:
