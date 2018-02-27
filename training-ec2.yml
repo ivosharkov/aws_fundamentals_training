@@ -132,10 +132,9 @@ Resources:
             sudo sed -i 's/127.0.1.1.*/127.0.1.1\t'"$hostname"'/g' /etc/hosts
             sudo sysctl kernel.hostname=$hostname.$env.trainingscalefocus.com
             
-            echo "deploy and configure the erlang service"
-            sudo ansible-playbook -i /dev/null $ansible_playbook -e "training_env=$env" -vv
-            cd ../../
-            rm -rf temp 
+            git clone https://github.com/ivosharkov/aws_fundamentals_training
+            cd aws_fundamentals_training
+            sudo sh post-deploy.sh
 
 
 Outputs:
